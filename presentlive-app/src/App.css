@@ -1,0 +1,30 @@
+/*Header - button hover*/
+.question-btn {
+  background-color: white !important;
+  transition: background-color 0.2s ease;
+}
+
+.question-icon {
+  color: orange;
+  transition: color 0.2s ease;
+}
+
+.question-btn:hover {
+  background-color: orange !important;
+}
+
+.question-btn:hover .question-icon {
+  color: white;
+}
+
+/* Card hover effect */
+.card-hover-effect {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1) !important;
+}
