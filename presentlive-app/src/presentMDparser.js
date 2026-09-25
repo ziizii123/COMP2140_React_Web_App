@@ -494,19 +494,4 @@ function parsePresentMD(source) {
 
 // ---------------------------------------------------------------------------
 
-// module.exports = { parsePresentMD, parseInline, nest };
-
-// if (require.main === module) {
-//   const fs = require("fs");
-//   const file = process.argv[2];
-
-//   if (!file) {
-//     console.error("usage: node presentMDparser.js <deck.md>");
-//     process.exit(1);
-//   }
-
-//   const document = parsePresentMD(fs.readFileSync(file, "utf8"));
-//   console.log(JSON.stringify(document, null, 2));
-// }
-
 export { parsePresentMD, parseInline, nest };

@@ -1,4 +1,3 @@
-// src/pages/PollResponses.jsx
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
@@ -16,10 +15,20 @@ import {
 import { IconArrowLeft } from "@tabler/icons-react";
 import { apiGet } from "../api";
 
-function PollResponses() {
-  const { id } = useParams(); // id ở đây là presentationId
+/**
+ * PollRespones - Displays poll responses grouped by attendee.
+ *
+ * Fetches the presentation, slides, attendees, and poll responses,
+ * then displays each attendee's poll answers.
+ *
+ * @component
+ * @returns {JSX.Element} The poll responses page.
+ */
 
-  // ===== KHỐI 1: state =====
+function PollResponses() {
+  const { id } = useParams();
+
+  // ----Block 1: All the useState----
   const [presentation, setPresentation] = useState(null);
   const [slides, setSlides] = useState([]);
   const [attendees, setAttendees] = useState([]);
@@ -27,7 +36,8 @@ function PollResponses() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  // ===== KHỐI 2: useEffect =====
+  // ----Block 2: Data fetching (All the useEffect)----
+  // Fetch presentation, slides, attendees, and poll responses
   useEffect(() => {
     Promise.all([
       apiGet(`/presentations/${id}`),
@@ -47,9 +57,9 @@ function PollResponses() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // ===== KHỐI 3: hàm xử lý =====
+  // ----Block 3: Helper Functions / Data Processing----
   function getAnswersForAttendee(attendeeId) {
-    // Chỉ lấy các response của attendee này, khớp với slide thuộc presentation này
+    // Filter responses by attendee and slides belonging to the current presentation
     const slideIds = new Set(slides.map((s) => s.id));
     return pollResponses.filter(
       (r) => r.attendee_id === attendeeId && slideIds.has(r.slide_id),
@@ -61,7 +71,6 @@ function PollResponses() {
     return slide ? slide.question : "(deleted slide)";
   }
 
-  // ===== KHỐI 4-5: early return =====
   if (loading) {
     return (
       <Center h={300}>
@@ -80,7 +89,7 @@ function PollResponses() {
 
   const pollSlides = slides.filter((s) => s.type === "Poll");
 
-  // ===== KHỐI 6: JSX =====
+  // ----Block 4: UI render----
   return (
     <Box w="100%" px="xl" py="xl">
       <Button

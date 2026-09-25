@@ -1,4 +1,3 @@
-// src/pages/PresentationView.jsx
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -15,28 +14,52 @@ import {
 import { apiGet, apiPost, apiPut } from "../api";
 import { PresentMDPreview } from "../presentMDRenderer";
 
+/**
+ * PresentationView -- the attendee-facing guided workflow for a single Presentation. 
+ * Reads the presentation id from the URL, requires no login, 
+ * and works when the link is opened in a fresh browser session.
+ *
+ * The component moves through four phases, tracked in local state:
+ *   "welcome"  -> attendee enters a display name and joins
+ *   "slides"   -> one slide shown per screen, no back/skip allowed
+ *   "finished" -> thank-you screen, with an optional read-only review
+
+ * Refreshing the page or reopening the link later resumes from the same slide 
+ * instead of restarting the guided flow as (current_position, status) is persisted to the Attendee
+ * record via the API on every "Next" click.
+ *
+ * @component
+ * @returns {JSX.Element} The current phase's screen for the attendee
+ */
+
 function PresentationView() {
   const { id } = useParams();
 
-  // ===== KHỐI 1: state =====
+  // ----Block 1: All the useState----
   const [presentation, setPresentation] = useState(null);
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  const [phase, setPhase] = useState("welcome"); // "welcome" | "slides" | "finished"
+  const [phase, setPhase] = useState("welcome"); // "welcome" -> "slides" -> "finished" -> "review"
+
+  // Welcome screen: display name input
   const [displayName, setDisplayName] = useState("");
   const [nameError, setNameError] = useState(null);
   const [joining, setJoining] = useState(false);
 
-  const [attendee, setAttendee] = useState(null); // record Attendee sau khi join
+  const [attendee, setAttendee] = useState(null); // record attendee after joining
   const [currentPosition, setCurrentPosition] = useState(0);
+
+  // Poll answering state
   const [selectedOption, setSelectedOption] = useState(null);
   const [pollSubmitted, setPollSubmitted] = useState(false);
   const [advancing, setAdvancing] = useState(false);
-  const [reviewIndex, setReviewIndex] = useState(null); // null = chưa bật review
 
-  // ===== KHỐI 2: useEffect =====
+  // Read-only review mode after finishing (null = not reviewing)
+  const [reviewIndex, setReviewIndex] = useState(null);
+
+  // ----Block 2: Data fetching (All the useEffect)----
   useEffect(() => {
     Promise.all([
       apiGet(`/presentations/${id}`),
@@ -51,7 +74,7 @@ function PresentationView() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // ===== KHỐI 3: hàm xử lý =====
+  // ----Block 3: Data processing handlers----
   function checkExistingAttendee() {
     const savedAttendeeId = localStorage.getItem(`attendee_${id}`);
     if (!savedAttendeeId) return;
@@ -63,7 +86,7 @@ function PresentationView() {
         setPhase(data.status === "Finished" ? "finished" : "slides");
       })
       .catch(() => {
-        // attendeeId cũ không còn hợp lệ (VD: bị xóa) -> coi như người mới
+        // Saved id no longer resolves (e.g. deleted) - treat as a new visitor
         localStorage.removeItem(`attendee_${id}`);
       });
   }
@@ -99,7 +122,7 @@ function PresentationView() {
 
     try {
       if (nextPosition >= slides.length) {
-        // Đã qua slide cuối -> kết thúc
+        // Past the last slide -> end
         await apiPut(`/attendees/${attendee.id}`, {
           presentation_id: attendee.presentation_id,
           display_name: attendee.display_name,
@@ -140,7 +163,7 @@ function PresentationView() {
     }
   }
 
-  // ===== KHỐI 4-5: early return =====
+  // Early returns (loading / error / unpublished)
   if (loading) {
     return (
       <Center h={300}>
@@ -165,7 +188,8 @@ function PresentationView() {
     );
   }
 
-  // ===== KHỐI 6: JSX =====
+  // ----Block 4: UI render (JSX)----
+  // --- phase: "welcome" ---
   if (phase === "welcome") {
     return (
       <Center h="100vh">
@@ -202,8 +226,7 @@ function PresentationView() {
     );
   }
 
-  // Tạm thời placeholder cho phase "slides" và "finished" — làm ở Bước 2, 3
-  // ===== phase === "slides" =====
+  // --- phase: "slides" ---
   if (phase === "slides") {
     const slide = slides[currentPosition];
     const options = (slide.options || "")
@@ -229,6 +252,7 @@ function PresentationView() {
               </Text>
 
               {pollSubmitted ? (
+                // Locked view once submitted (cannot change)
                 <Text c="green">
                   Your answer has been recorded: {selectedOption}
                 </Text>
@@ -259,7 +283,7 @@ function PresentationView() {
               )}
             </Box>
           )}
-
+          {/* Disabled until a Poll slide has been answered (no skipping an unanswered poll) */}
           <Button
             onClick={handleNext}
             loading={advancing}
@@ -274,10 +298,8 @@ function PresentationView() {
     );
   }
 
-  // Tạm thời placeholder cho phase "finished" — làm ở Bước 3
-  // ===== phase === "finished" =====
+  // --- phase: "finished" ---
   if (phase === "finished") {
-    // Đang ở chế độ Review: xem lại từng slide, chỉ đọc, không ảnh hưởng tiến trình
     if (reviewIndex !== null) {
       const slide = slides[reviewIndex];
       const options = (slide.options || "")
@@ -339,7 +361,7 @@ function PresentationView() {
       );
     }
 
-    // Màn hình Thank you mặc định
+    // Default "Thank you" screen
     return (
       <Center h="100vh">
         <Box maw={500} w="100%" p="xl" style={{ textAlign: "center" }}>

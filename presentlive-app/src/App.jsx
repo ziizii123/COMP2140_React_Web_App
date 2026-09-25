@@ -7,6 +7,13 @@ import PresentationView from "./pages/PresentationView";
 import PollResponses from "./pages/PollResponses";
 import "./App.css";
 
+/**
+ * The App
+ *
+ * The default view when accessing the website is the presenter layout.
+ * The header and footer will be hidden when switching to the audience view.
+ */
+
 function App() {
   const location = useLocation();
   const isAudienceView = location.pathname.startsWith("/presentation/");

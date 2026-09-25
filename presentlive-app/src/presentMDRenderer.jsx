@@ -1,5 +1,15 @@
-// src/presentMDRenderer.jsx
 import { parsePresentMD } from "./presentMDparser";
+
+/**
+ * Renders a preview of PresentMD source content.
+ *
+ * Parses the PresentMD source into blocks, extracts slide-level styles (done by presentMDparser),
+ * and renders the supported content blocks as React elements.
+ *
+ * @component
+ * @param {string} props.source - PresentMD source content to parse and preview
+ * @returns {JSX.Element}  The rendered PresentMD preview
+ */
 
 function renderRuns(runs) {
   return runs.map((run, i) => {
@@ -55,21 +65,15 @@ function renderBlock(block, i) {
         />
       );
     default:
-      // separator, directive, frontmatter, note: không hiển thị trực tiếp
+      // separator, directive, frontmatter, note: not displayed directly
       return null;
   }
 }
 
-// Kiểm tra 1 giá trị có đúng dạng mã màu hex hợp lệ không (#fff hoặc #ffffff)
 function isValidHexColor(value) {
   return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(value || "").trim());
 }
 
-/**
- * Đọc các directive (backgroundColor, color) trong blocks,
- * trả về { style, contentBlocks } — style để áp cho slide,
- * contentBlocks là các block còn lại cần hiển thị.
- */
 function extractSlideStyle(blocks) {
   const style = {};
 

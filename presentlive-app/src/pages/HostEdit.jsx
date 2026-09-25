@@ -23,9 +23,26 @@ import { summarizePollResults } from "../aiApi";
 import { PresentMDPreview } from "../presentMDRenderer";
 import { QRCodeSVG } from "qrcode.react";
 
-// KHỐI 1: TẤT CẢ useState
+/**
+ * HostEdit - Presenter's editing page
+ *
+ * Allows the presenter to:
+ * - Edit presentation details and status
+ * - Create, edit, and delete slides
+ * - Create and manage poll slides
+ * - View attendees and their participation status
+ * - View poll results with response counts and percentages
+ * - Generate AI summaries of poll results
+ * - Copy the presentation link and display its QR code
+ *
+ * @component
+ * @returns {JSX.Element} The presentation editing page
+ */
+
 function HostEdit() {
   const { id } = useParams();
+  // ----Block 1: All the useState----
+  // General UI & API state
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -39,7 +56,10 @@ function HostEdit() {
   const [loadError, setLoadError] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  // ----- State Slide (MỚI THÊM) -----
+  // Slides and attendee data
+  const [slideErrors, setSlideErrors] = useState({});
+  const [attendees, setAttendees] = useState([]);
+  const [pollResponses, setPollResponses] = useState([]);
   const [slides, setSlides] = useState([]);
   const [slideModalOpen, setSlideModalOpen] = useState(false);
   const [editingSlideId, setEditingSlideId] = useState(null);
@@ -50,14 +70,14 @@ function HostEdit() {
     question: "",
     options: "",
   });
-  const [slideErrors, setSlideErrors] = useState({});
-  const [attendees, setAttendees] = useState([]);
-  const [pollResponses, setPollResponses] = useState([]);
-  const [aiSummaries, setAiSummaries] = useState({}); // { [slideId]: text }
-  const [aiLoading, setAiLoading] = useState({}); // { [slideId]: true/false }
-  const [aiErrors, setAiErrors] = useState({}); // { [slideId]: text }
 
-  // KHỐI 2: TẤT CẢ useEffect
+  // AI summary state
+  const [aiSummaries, setAiSummaries] = useState({});
+  const [aiLoading, setAiLoading] = useState({});
+  const [aiErrors, setAiErrors] = useState({});
+
+  // ----Block 2: Data fetching (All the useEffect)----
+  // Fetch presentation data and handle errors
   useEffect(() => {
     apiGet(`/presentations/${id}`)
       .then((data) => setForm(data))
@@ -65,7 +85,6 @@ function HostEdit() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // ----- useEffect Slide (MỚI THÊM) -----
   useEffect(() => {
     loadSlides();
   }, [id]);
@@ -74,17 +93,10 @@ function HostEdit() {
     loadAttendeesAndResponses();
   }, [id]);
 
-  //
-  function handleChange(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null })); // xóa lỗi field đó khi người dùng sửa lại
-  }
-
+  // ----Block 3: Presentation and slide management----
   function validate() {
     const newErrors = {};
     if (!form.title.trim()) newErrors.title = "Title is required";
-    // if (!form.description.trim())
-    //   newErrors.description = "Description is required";
     if (!form.presenter_name.trim())
       newErrors.presenter_name = "Presenter name is required";
     setErrors(newErrors);
@@ -114,31 +126,12 @@ function HostEdit() {
     }
   }
 
-  function loadAttendeesAndResponses() {
-    apiGet(`/attendees?presentation_id=${id}`)
-      .then(setAttendees)
-      .catch(() => console.error("Failed to load attendees"));
-
-    apiGet(`/poll_responses`)
-      .then(setPollResponses)
-      .catch(() => console.error("Failed to load poll responses"));
+  function handleChange(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: null })); // Clear the error for that field when the user corrects it
   }
 
-  function getPollResultsForSlide(slideId) {
-    const validAttendeeIds = new Set(attendees.map((a) => a.id));
-
-    const responsesForThisSlide = pollResponses.filter(
-      (r) => r.slide_id === slideId && validAttendeeIds.has(r.attendee_id),
-    );
-
-    const counts = {};
-    responsesForThisSlide.forEach((r) => {
-      counts[r.selected_option] = (counts[r.selected_option] || 0) + 1;
-    });
-
-    return { counts, total: responsesForThisSlide.length };
-  }
-  // ----- Hàm xử lý Slide (MỚI THÊM) -----
+  // Slide management
   function loadSlides() {
     apiGet(`/slides?presentation_id=${id}`)
       .then((data) => setSlides(data))
@@ -169,13 +162,6 @@ function HostEdit() {
     });
     setSlideErrors({});
     setSlideModalOpen(true);
-  }
-
-  function handleCopyLink() {
-    const link = `${window.location.origin}/presentation/${id}`;
-    navigator.clipboard.writeText(link);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2000);
   }
 
   function validateSlide() {
@@ -230,22 +216,41 @@ function HostEdit() {
     }
   }
 
-  if (loading) {
-    return (
-      <Center h={200}>
-        <Loader />
-      </Center>
-    );
+  // Attendee and poll response data
+  function loadAttendeesAndResponses() {
+    apiGet(`/attendees?presentation_id=${id}`)
+      .then(setAttendees)
+      .catch(() => console.error("Failed to load attendees"));
+
+    apiGet(`/poll_responses`)
+      .then(setPollResponses)
+      .catch(() => console.error("Failed to load poll responses"));
   }
 
-  if (loadError) {
-    return (
-      <Center h={200}>
-        <Text c="red">{loadError}</Text>
-      </Center>
+  function getPollResultsForSlide(slideId) {
+    const validAttendeeIds = new Set(attendees.map((a) => a.id));
+
+    const responsesForThisSlide = pollResponses.filter(
+      (r) => r.slide_id === slideId && validAttendeeIds.has(r.attendee_id),
     );
+
+    const counts = {};
+    responsesForThisSlide.forEach((r) => {
+      counts[r.selected_option] = (counts[r.selected_option] || 0) + 1;
+    });
+
+    return { counts, total: responsesForThisSlide.length };
   }
 
+  // Presentation link
+  function handleCopyLink() {
+    const link = `${window.location.origin}/presentation/${id}`;
+    navigator.clipboard.writeText(link);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }
+
+  // AI summarize handler
   async function handleSummarize(slide) {
     const { counts, total } = getPollResultsForSlide(slide.id);
 
@@ -270,13 +275,30 @@ function HostEdit() {
     }
   }
 
-  // TEXT INPUTS when creating the presentation, and a save button. When the save button is clicked, it should validate the inputs and then call the API to save the changes. If the save is successful, it should show a success message; if not, it should show an error message.
+  if (loading) {
+    return (
+      <Center h={200}>
+        <Loader />
+      </Center>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Center h={200}>
+        <Text c="red">{loadError}</Text>
+      </Center>
+    );
+  }
+
+  // ----Block 4: Render UI elements----
   return (
     <Box w="100%" px="xl" py="xl" maw={600}>
       <Title order={2} mb="lg">
         Edit Presentation
       </Title>
 
+      {/* Presentation - Presentation details */}
       <TextInput
         label="Title"
         value={form.title}
@@ -323,6 +345,7 @@ function HostEdit() {
         Save
       </Button>
 
+      {/* Link & QR code - Presentation link and QR code */}
       <Group mt="xl" mb={50} align="flex-start">
         <Box>
           <Text fw={500} mb="xs">
@@ -332,6 +355,7 @@ function HostEdit() {
             leftSection={<IconCopy size={16} />}
             variant="light"
             onClick={handleCopyLink}
+            color={linkCopied ? "teal" : "blue"}
           >
             {linkCopied ? "Copied!" : "Copy Link"}
           </Button>
@@ -347,7 +371,7 @@ function HostEdit() {
         </Box>
       </Group>
 
-      {/* ----- Phần quản lý Slide ----- */}
+      {/* Slide -  Slide management (Create, edit and delete slide*/}
       <Group justify="space-between" mt={50} mb="md">
         <Title order={3}>Slides</Title>
         <Button
@@ -395,7 +419,7 @@ function HostEdit() {
         ))}
       </SimpleGrid>
 
-      {/* ----- Modal thêm/sửa Slide: Editor + Preview ----- */}
+      {/* Slide (Modal) -  Edit and update slide */}
       <Modal
         opened={slideModalOpen}
         onClose={() => setSlideModalOpen(false)}
@@ -462,17 +486,7 @@ function HostEdit() {
             minRows={20}
             maxRows={30}
           />
-          {/* <Box
-            p="sm"
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              minHeight: 500,
-              maxHeight: 600,
-              overflowY: "auto",
-            }}
-          >
-            <PresentMDPreview source={slideForm.body} /> */}
+
           <Box
             p="sm"
             style={{
@@ -488,7 +502,7 @@ function HostEdit() {
             {slideForm.type === "Poll" && (
               <Box mt="lg" pt="md" style={{ borderTop: "1px solid #ddd" }}>
                 <Text fw={600} size="lg" mb="sm">
-                  {slideForm.question || "(Question chưa nhập)"}
+                  {slideForm.question || "(There is no question)"}
                 </Text>
                 <Stack gap="xs">
                   {slideForm.options
@@ -504,7 +518,6 @@ function HostEdit() {
               </Box>
             )}
           </Box>
-          {/* </Box> */}
         </SimpleGrid>
 
         {slideErrors.general && (
@@ -518,7 +531,7 @@ function HostEdit() {
         </Button>
       </Modal>
 
-      {/* ----- Phần Attendees + Round Trip (rubric 1.7) ----- */}
+      {/* Attendees – Track the number of participants and their status (e.g., "Viewing" / "Completed") */}
       <Group justify="space-between" mt={50} mb="md">
         <Title order={3}>Attendees ({attendees.length})</Title>
         <Button
@@ -530,13 +543,11 @@ function HostEdit() {
           View Details
         </Button>
       </Group>
-
       {attendees.length === 0 && (
         <Text c="dimmed" mb="xl">
           No one has joined yet. Share the presentation link to get started.
         </Text>
       )}
-
       <SimpleGrid cols={3} spacing="sm" mb="xl">
         {attendees.map((a) => (
           <Card key={a.id} withBorder padding="sm" radius="md">
@@ -550,7 +561,7 @@ function HostEdit() {
         ))}
       </SimpleGrid>
 
-      {/* Kết quả Poll cho từng Poll slide */}
+      {/* Poll results for each poll slide */}
       {slides.filter((s) => s.type === "Poll").length > 0 && (
         <>
           <Title order={3} mb="md">
@@ -580,7 +591,9 @@ function HostEdit() {
                         const count = counts[opt] || 0;
                         const percent =
                           total > 0 ? Math.round((count / total) * 100) : 0;
-
+                        {
+                          /* Display poll result counts and percentages */
+                        }
                         return (
                           <Box key={opt}>
                             <Group justify="space-between" mb={4}>
@@ -610,6 +623,8 @@ function HostEdit() {
                         );
                       })}
                     </Stack>
+
+                    {/* AI – Displayed as a button below attendee responses (AI summary) */}
                     <Button
                       variant="light"
                       size="xs"
@@ -640,5 +655,4 @@ function HostEdit() {
     </Box>
   );
 }
-
 export default HostEdit;
