@@ -1,10 +1,10 @@
-// src/aiApi.js
 const AI_URL = import.meta.env.VITE_AI_URL;
 const AI_KEY = import.meta.env.VITE_AI_KEY;
 
 /**
- * Gửi kết quả 1 poll (câu hỏi + số lượt chọn mỗi option) cho AI,
- * nhận về 1-2 câu tóm tắt xu hướng trả lời của khán giả.
+ * Sending the poll results to AI, including the questions and
+ * the responses for eah option.
+ * Receiving 1-3 sentences summarise the results.
  */
 export async function summarizePollResults(question, counts, total) {
   const optionsText = Object.entries(counts)
