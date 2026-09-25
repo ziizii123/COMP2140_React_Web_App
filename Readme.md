@@ -17,7 +17,7 @@ Presenters can use AI to summarize the results in 1-3 sentences for a quick over
 Packages used (already listed in `package.json`, installed automatically by step 2):
 `react-router-dom`, `@mantine/core`, `@mantine/hooks`, `@mantine/form`, `@tabler/icons-react`, `qrcode.react`
 
-## Workflow 1: Presenter — Presentation management
+## Workflow 1: Presenter - Presentation management
 
 1. Start at the home screen. If no presentations exist yet, a welcome modal appears - click **"+ New Presentation"** to begin.
 2. You are taken to the Edit page. Fill in **Title**, **Description**, **Presenter Name**, and click **Save**.
@@ -33,7 +33,7 @@ Packages used (already listed in `package.json`, installed automatically by step
    - Click **"Summarize with AI"** on any poll to get a short AI-generated summary of the responses.
    - Click **"View Details"** next to Attendees to open `PollResponses.jsx`, showing each attendee's individual answers.
 
-## Workflow 2: Attendee — Presentation view and responses
+## Workflow 2: Attendee - Presentation view and responses
 
 1. Open the presentation link (from Copy Link or QR code) in a new browser tab or on a separate device. No login is required.
 2. If the presentation is still "Draft", a message is shown instead of the presentation. Publish it first (Workflow 1, step 3).
@@ -45,14 +45,13 @@ Packages used (already listed in `package.json`, installed automatically by step
 
 ## Where each Functionality requirement is demonstrated
 
-**1. App Design and Navigation** - Consistent Header and Footer for presenter mode, with repeated color themes.
-**2. A Multi-entity Data Structure** - 4 entities: `presentations`, `slides`, `attendees`, `poll_responses`, all via the provided RESTful API.
-**3. Data Collection and Interaction** - Responses from attendees are displaying in both percentages and numbers for presenter. It can be used later for AI Summary.
-**4. User Stories/Workflows** - Two distinctive workflow for both presenter and attendee. For the attendee's workflow, they follw a one-step per page, which means
-they cannot skipped before completing the task. Furthermore, only review is allowed after finishing their responses.
-**5. Unique Link Access** - "Copy Link" button on the Edit page; paste the link into a fresh incognito window to confirm it works with no login.
-**6. AI Integration** - "Summarize with AI" button next to any Poll Result on the Edit page (Workflow 1, step 6).
-**7. Advanced Features** - QR code shown on the Edit page, generated from the unique presentation link.
+**1. App Design and Navigation** -- Consistent Header and Footer for presenter mode, with repeated color themes.
+**2. A Multi-entity Data Structure** -- 4 entities: `presentations`, `slides`, `attendees`, `poll_responses`, all via the provided RESTful API.
+**3. Data Collection and Interaction** -- Responses from attendees are displaying in both percentages and numbers for presenter. It can be used later for AI Summary.
+**4. User Stories/Workflows** -- Two distinctive workflow for both presenter and attendee. For the attendee's workflow, they follw a one-step per page, which means they cannot skipped before completing the task. Furthermore, only review is allowed after finishing their responses.
+**5. Unique Link Access** -- "Copy Link" button on the Edit page; paste the link into a fresh incognito window to confirm it works with no login.
+**6. AI Integration** -- "Summarize with AI" button next to any Poll Result on the Edit page (Workflow 1, step 6).
+**7. Advanced Features** -- QR code shown on the Edit page, generated from the unique presentation link.
 
 ## Sample Data
 
@@ -101,7 +100,7 @@ This `Readme.md` template was taken from the Week 8 Applied Class.
 
 Most UI elements were designed by the student, except the AI integration design on the `HostEdit.jsx` page, which relied mostly on AI assistance.
 
-Pages primarily written by the student, with general support from AI:
+Pages primarily written by the student, with general support from AI (Claude):
 
 - `Header.jsx`
 - `Footer.jsx`
@@ -111,7 +110,7 @@ Pages primarily written by the student, with general support from AI:
 - `App.jsx`
 - `App.css`
 
-Pages/sections primarily supported by AI:
+Pages/sections primarily supported by AI (Claude):
 
 - `PollResponses.jsx` - data fetching logic
 - `HostEdit.jsx`
